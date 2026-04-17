@@ -1,10 +1,14 @@
 const IORedis = require("ioredis");
-const { Queue } = require("bullmq");
 
 const connection = new IORedis(process.env.REDIS_URL, {
-  maxRetriesPerRequest: null // ✅ IMPORTANT FIX
+  maxRetriesPerRequest: null,
+  enableReadyCheck: false, // helps in cloud env
 });
 
-const emailQueue = new Queue("emailQueue", { connection });
+connection.on("connect", () => {
+  console.log("✅ Redis connected");
+});
 
-module.exports = { emailQueue, connection };
+connection.on("error", (err) => {
+  console.error("❌ Redis error:", err);
+});
