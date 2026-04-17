@@ -17,6 +17,8 @@ connectDB();
 const app = express();
 app.use(express.json());
 
+console.log("REDIS_URL:", process.env.REDIS_URL);
+
 // ✅ Rate limiters
 app.use(globalLimiter);
 app.use("/auth", authLimiter);
