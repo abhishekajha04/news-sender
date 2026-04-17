@@ -3,21 +3,9 @@ const express = require("express");
 const connectDB = require("./config/db");
 const { globalLimiter, authLimiter } = require("./middleware/ratelimiter");
 
-// ✅ Avoid cron + worker during tests
-if (process.env.NODE_ENV !== "test") {
-  require("./workers/email.worker");
-
-  require("./cron/news.cron");
-  require("./cron/summary.cron");
-  require("./cron/scheduler");
-}
-
-connectDB();
-
+// 🔥 Init app
 const app = express();
 app.use(express.json());
-
-console.log("REDIS_URL:", process.env.REDIS_URL);
 
 // ✅ Rate limiters
 app.use(globalLimiter);
@@ -32,10 +20,28 @@ app.get("/", (req, res) => {
   res.send("API is running ✅");
 });
 
-// ✅ Start server only if not testing
+// ✅ Start infra (only if not testing)
+if (process.env.NODE_ENV !== "test") {
+  console.log("🚀 Initializing background services...");
+
+  // Worker
+  require("./workers/email.worker");
+
+  // Cron jobs
+  require("./cron/news.cron");
+  require("./cron/summary.cron");
+  require("./cron/scheduler");
+}
+
+// ✅ Connect DB
+connectDB();
+
+// ✅ Start server
 if (require.main === module) {
-  app.listen(process.env.PORT, () => {
-    console.log("Server running");
+  const PORT = process.env.PORT || 5000;
+
+  app.listen(PORT, () => {
+    console.log(`✅ Server running on port ${PORT}`);
   });
 }
 
